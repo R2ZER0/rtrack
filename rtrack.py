@@ -48,17 +48,17 @@ def history(tsfrom=None, tsto=None):
     elif not tsto and tsfrom:
         cur = g.db.execute("""
             select latitude, longitude, timestamp from records
-            order by timestamp desc
             where timestamp >= ?
+            order by timestamp desc
             """, [tsfrom])
     
     # Both from and to specified
     else:
         cur = g.db.execute("""
             select latitude, longitude, timestamp from records
-            order by timestamp desc
             where timestamp >= ?
             and timestamp <= ?
+            order by timestamp desc
             """, [tsfrom, tsto])
         
     records = [ dict(latitude=row[0], longitude=row[1], timestamp=row[2]) for row in cur.fetchall() ]
