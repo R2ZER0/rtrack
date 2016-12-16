@@ -1,0 +1,6 @@
+version: '2.0'
+services:
+  rtrack:
+    build: .
+    ports:
+      - "8000:8000"
