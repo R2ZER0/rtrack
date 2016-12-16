@@ -2,6 +2,8 @@ import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, jsonify
 from flask.ext.cors import CORS
 from werkzeug.contrib.fixers import ProxyFix
+from dateutil.parser import parse
+
 
 # config
 DATABASE = '/var/rtrack/rtrack.db'
@@ -67,6 +69,25 @@ def history(tsfrom=None, tsto=None):
         
     records = [ dict(latitude=row[0], longitude=row[1], timestamp=row[2]) for row in cur.fetchall() ]
     return jsonify(history=records)
+
+@app.route('/updateflex/<key>', methods=['GET'])
+def update_location_flex(key):
+    if key == SECRET_KEY:
+        thetime = parse(request.args.get('timestamp'))
+        thetimesecs = thetime.strftime("%s")
+        g.db.execute('insert into records (latitude, longitude, timestamp) values (?, ?, ?)', [
+                     request.args.get('latitude'),
+                     request.args.get('longitude'),
+                     str(int(thetimesecs)*1000)
+        ])
+        g.db.commit()
+        return jsonify(success=True)
+
+    else:
+        response = jsonify(success=False, error="Incorrect Key")
+        response.status_code = 401
+        return response
+
 
 @app.route('/update/<key>', methods=['POST'])
 def update_location(key):
