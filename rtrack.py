@@ -1,9 +1,10 @@
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, jsonify
 from flask.ext.cors import CORS
+from werkzeug.contrib.fixers import ProxyFix
 
 # config
-DATABASE = 'rtrack.db'
+DATABASE = '/var/rtrack/rtrack.db'
 DEBUG = True
 SECRET_KEY = 'a_secret_key'
 
@@ -29,7 +30,10 @@ def teardown_request(exception):
 @app.route('/')
 def show_location():
   cur = g.db.execute('select latitude, longitude, timestamp from records order by timestamp desc limit 1')
-  record = [dict(latitude=row[0], longitude=row[1], timestamp=row[2]) for row in cur.fetchall()][0]
+  rows = cur.fetchall()
+  record = dict()
+  if len(rows) > 0:
+    record = [dict(latitude=row[0], longitude=row[1], timestamp=row[2]) for row in cur.fetchall()][0]
   return jsonify(record)
 
 @app.route('/history')
@@ -79,6 +83,8 @@ def update_location(key):
         response = jsonify(success=False, error="Incorrect Key")
         response.status_code = 401
         return response
+
+app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', threaded=True)
